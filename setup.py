@@ -5,9 +5,9 @@ with open("requirements.txt") as f:
     content = f.readlines()
 requirements = [x.strip() for x in content if "git+" not in x]
 
-setup(name='solAIre',
+setup(name='SARCAST_X',
       version="0.0.0",
-      description="Solar Flare Prediction (from SDO Benchmark)",
+      description="sarcasm and fake news detection",
     #   install_requires=requirements,
       packages=find_packages(),
       test_suite="tests",
