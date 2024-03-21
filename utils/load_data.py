@@ -10,5 +10,9 @@ def load_data():
     return df_sarcasm
 
 def load_fakenews_data():
-    df_fake = pd.read_csv('raw_data/fake_news_data.csv')
+    df_fake = pd.read_csv('raw_data/twitter_sentiment_data.csv')
     return df_fake
+
+def load_twitter_climate_data():
+    df_climate = pd.read_csv('raw_data/twitter_climate.csv')
+    return df_climate

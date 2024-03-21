@@ -1,18 +1,18 @@
-from transformers import AutoModelForSequenceClassification
-from transformers import AutoTokenizer
-import string
-import pandas as pd
 import torch
-from sklearn.preprocessing import LabelEncoder
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report
 from transformers import Trainer, TrainingArguments
 from utils.data_cleaning import preprocess_sarcasm_data, preprocess_fakenews_data
 from utils.load_data import load_data, load_fakenews_data
+from models_huggingface import *
+from train_test_split import *
 from params import *
 from warnings import filterwarnings
 filterwarnings('ignore')
 from colorama import Fore, Style
+
+
+
+############################################ LOAD & PREPROCESS TEXT ############################################
 
 def load_preprocess_text():
 
@@ -27,56 +27,13 @@ def load_preprocess_text():
     print(Fore.BLUE + "\nLoading fake news data..." + Style.RESET_ALL)
     df_fake = load_fakenews_data()
     # preprocess the text
-    df_fake['text'] = df_fake['text'].apply(preprocess_fakenews_data)
+    df_fake['message'] = df_fake['message'].apply(preprocess_fakenews_data)
+    print("✅ Fake news data loaded & preprocessed")
 
     return df_sarcasm, df_fake
 
 
 ############################################ SARCASM MODEL ############################################
-
-def sarcasm_model_loader(sarcasm_model_path=SARCASM_MODEL_PATH):
-
-    print(Fore.BLUE + "\nLoading sarcasm model..." + Style.RESET_ALL)
-    # Load the model
-    tokenizer_sarcasm = AutoTokenizer.from_pretrained(sarcasm_model_path)
-    sarcasm_model = AutoModelForSequenceClassification.from_pretrained(sarcasm_model_path)
-    print("✅ Sarcasm model loaded")
-
-
-    return sarcasm_model, tokenizer_sarcasm
-
-def train_test_sarcasm(X, y, tokenizer_sarcasm):
-
-    print(Fore.BLUE + "\nTokenizing & splitting sarcasm data..." + Style.RESET_ALL)
-
-    X_train_sarcasm, X_test, y_train_sarcasm, y_test_sarcasm = train_test_split(X, y, test_size=0.2, random_state=42)
-    #label encode the target variable
-    le = LabelEncoder()
-    y_train_sarcasm = le.fit_transform(y_train_sarcasm)
-    y_test_sarcasm = le.transform(y_test_sarcasm)
-
-    # tokenize the data
-    train_encodings = tokenizer_sarcasm(X_train_sarcasm.tolist(), truncation=True, padding=True)
-    test_encodings = tokenizer_sarcasm(X_test.tolist(), truncation=True, padding=True)
-
-    # create a dataset
-    class SarcasmDataset(torch.utils.data.Dataset):
-        def __init__(self, encodings, labels):
-            self.encodings = encodings
-            self.labels = labels
-
-        def __getitem__(self, idx):
-            item = {key: torch.tensor(val[idx]) for key, val in self.encodings.items()}
-            item['labels'] = torch.tensor(self.labels[idx])
-            return item
-
-        def __len__(self):
-            return len(self.labels)
-
-    train_sarcasm_dataset = SarcasmDataset(train_encodings, y_train_sarcasm)
-    test_sarcasm_dataset = SarcasmDataset(test_encodings, y_test_sarcasm)
-    print("✅ Sarcasm data tokenized & split")
-    return train_sarcasm_dataset, test_sarcasm_dataset, y_test_sarcasm, le
 
 def train_sarcasm_model(model, train_dataset, test_dataset):
 
@@ -84,7 +41,7 @@ def train_sarcasm_model(model, train_dataset, test_dataset):
     # define the training arguments
     training_args = TrainingArguments(
         output_dir='./results',
-        num_train_epochs=3,
+        num_train_epochs=1,
         per_device_train_batch_size=16,
         per_device_eval_batch_size=16,
         warmup_steps=500,
@@ -136,14 +93,34 @@ def save_sarcasm_model(model, tokenizer):
 
 ############################################ FAKE NEWS MODEL ############################################
 
-def fake_news_model_loader(model_path=FAKE_NEWS_MODEL_PATH):
+def train_fake_news_model(model, train_dataset, test_dataset):
 
-    print(Fore.BLUE + "\nLoading fake news model..." + Style.RESET_ALL)
-    # Load the model
-    tokenizer_fake_news = AutoTokenizer.from_pretrained(model_path)
-    fake_news_model = AutoModelForSequenceClassification.from_pretrained(model_path)
-    print("✅ Fake news model loaded")
-    return fake_news_model, tokenizer_fake_news
+    print(Fore.BLUE + "\nTraining fake news model..." + Style.RESET_ALL)
+    # define the training arguments
+    training_args = TrainingArguments(
+        output_dir='./results',
+        num_train_epochs=1,
+        per_device_train_batch_size=16,
+        per_device_eval_batch_size=16,
+        warmup_steps=500,
+        weight_decay=0.01,
+        logging_dir='./logs',
+    )
+
+    # define the trainer
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=train_dataset,
+        eval_dataset=test_dataset
+    )
+
+    # train the model
+    trainer = trainer.train()
+    print("✅ Fake news model trained")
+    return trainer
+
+
 
 ############################################ GET PROBABILITIES ############################################
 
@@ -169,20 +146,29 @@ def get_probabilities(text, fake_news_model, tokenizer_fake_news, sarcasm_model,
 
     return sarcasm_prob, fake_news_prob
 
+
+############################################ MAIN FUNCTION ############################################
+
 if __name__ == "__main__":
 
-    # Retrain the sarcasm model
+    # Load & preprocess the text
     df_sarcasm, df_fake = load_preprocess_text()
+
+    # Retrain the sarcasm model
     sarcasm_model, tokenizer_sarcasm = sarcasm_model_loader()
-    X = df_sarcasm['text']
-    y = df_sarcasm['class']
-    train_dataset, test_dataset, y_test, le = train_test_sarcasm(X, y, tokenizer_sarcasm)
+    X_sarcasm = df_sarcasm['text']
+    y_sarcasm = df_sarcasm['class']
+    train_dataset, test_dataset, y_test, le = train_test_sarcasm(X_sarcasm, y_sarcasm, tokenizer_sarcasm)
     trainer = train_sarcasm_model(sarcasm_model, train_dataset, test_dataset)
     evaluate_sarcasm_model(trainer, test_dataset, y_test, le)
     save_sarcasm_model(sarcasm_model, tokenizer_sarcasm)
-    # Load the fake news model
+
+    # Retrain the fake news model
     fake_news_model, tokenizer_fake_news = fake_news_model_loader()
+
+
+
     # Get the probabilities
-    df_fake['sarcasm_prob'] = df_fake['text'].apply(lambda x: get_probabilities(x, fake_news_model, tokenizer_fake_news, sarcasm_model, tokenizer_sarcasm)[0])
-    df_fake['fake_news_prob'] = df_fake['text'].apply(lambda x: get_probabilities(x, fake_news_model, tokenizer_fake_news, sarcasm_model, tokenizer_sarcasm)[1])
+    df_fake['sarcasm_prob'] = df_fake['message'].apply(lambda x: get_probabilities(x, fake_news_model, tokenizer_fake_news, sarcasm_model, tokenizer_sarcasm)[0])
+    df_fake['fake_news_prob'] = df_fake['message'].apply(lambda x: get_probabilities(x, fake_news_model, tokenizer_fake_news, sarcasm_model, tokenizer_sarcasm)[1])
     print(df_fake.head())
