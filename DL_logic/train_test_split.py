@@ -8,6 +8,17 @@ filterwarnings('ignore')
 from colorama import Fore, Style
 
 def train_test_sarcasm(X, y, tokenizer_sarcasm):
+    """
+    Tokenizes and splits the sarcasm data.
+
+    Args:
+        X (list): The input data.
+        y (list): The target labels.
+        tokenizer_sarcasm: The tokenizer for sarcasm data.
+
+    Returns:
+        tuple: A tuple containing the train sarcasm dataset, test sarcasm dataset, test labels, and label encoder.
+    """
 
     print(Fore.BLUE + "\nTokenizing & splitting sarcasm data..." + Style.RESET_ALL)
 
@@ -42,6 +53,17 @@ def train_test_sarcasm(X, y, tokenizer_sarcasm):
 
 
 def train_test_fakenews(X, y, tokenizer_fake_news):
+    """
+    Tokenizes and splits the fake news data.
+
+    Args:
+        X (list): The input data.
+        y (list): The target labels.
+        tokenizer_fake_news: The tokenizer for fake news data.
+
+    Returns:
+        tuple: A tuple containing the train fake news dataset, test fake news dataset, test labels, and label encoder.
+    """
 
     print(Fore.BLUE + "\nTokenizing & splitting fake news data..." + Style.RESET_ALL)
 
