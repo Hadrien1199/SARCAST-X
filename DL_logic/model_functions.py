@@ -30,8 +30,8 @@ def train_sarcasm_model(model, train_dataset, test_dataset):
     training_args = TrainingArguments(
         output_dir='./results',
         num_train_epochs=1,
-        per_device_train_batch_size=16,
-        per_device_eval_batch_size=16,
+        per_device_train_batch_size=8,
+        per_device_eval_batch_size=8,
         warmup_steps=500,
         weight_decay=0.01,
         logging_dir='./logs',
@@ -76,7 +76,7 @@ def evaluate_sarcasm_model(trainer, test_dataset, y_test, le):
     accuracy = accuracy_score(y_test, y_pred)
     print(f"Accuracy: {accuracy}")
     # print the classification report
-    print(Fore.MAGENTA +"\nClassification Report")
+    print(Fore.MAGENTA +"\nClassification Report" + Style.RESET_ALL)
     print(classification_report(y_test, y_pred, target_names=le.classes_))
     print("✅ Sarcasm model evaluated")
     return accuracy
@@ -113,7 +113,7 @@ def train_fake_news_model(model, train_dataset, test_dataset):
     # define the training arguments
     training_args = TrainingArguments(
         output_dir='./results',
-        num_train_epochs=1,
+        num_train_epochs=10,
         per_device_train_batch_size=16,
         per_device_eval_batch_size=16,
         warmup_steps=500,
