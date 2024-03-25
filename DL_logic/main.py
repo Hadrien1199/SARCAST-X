@@ -1,6 +1,6 @@
 import torch
 from utils.data_cleaning import preprocess_sarcasm_data, preprocess_fakenews_data
-from utils.load_data import load_data, load_fakenews_data
+from utils.load_data import load_social_sarcasm_data, load_fakenews_data
 from models_huggingface import *
 from model_functions import *
 from train_test_split import *
@@ -26,7 +26,7 @@ def load_preprocess_text():
     """
     # Load the data
     print(Fore.BLUE + "\nLoading & preprocessing sarcasm data..." + Style.RESET_ALL)
-    df_sarcasm = load_data()
+    df_sarcasm = load_social_sarcasm_data()
     # preprocess the text
     df_sarcasm['text'] = df_sarcasm['text'].apply(preprocess_sarcasm_data)
     print("✅ Sarcasm data loaded & preprocessed")
