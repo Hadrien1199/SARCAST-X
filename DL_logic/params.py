@@ -7,5 +7,9 @@ WORKING_DIRECTORY = os.getcwd()
 SARCASM_MODEL_PATH = "helinivan/english-sarcasm-detector"
 FAKE_NEWS_MODEL_PATH = "vikram71198/distilroberta-base-finetuned-fake-news-detection"
 
+# SAVED MODELS
+SARCASM_MODEL_SAVED = True
+FAKE_NEWS_MODEL_SAVED = False
+
 # CUDA
 CUDA = False
