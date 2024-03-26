@@ -5,7 +5,10 @@
 TO DO BEFORE FIRST RUN:
 
 
-TO DO AFTER CHANGING ENVIRONMENT VARIABLES:
+TO DO IF YOU WANT TO RETRAIN THE MODELS:
+
+- DELETE the **sarcasm_model** and/or **fake_news_model** folders in the **models** folder
+- DELETE the **results** folder
 
 ## Environment Variables
 
@@ -13,7 +16,9 @@ In the `params.py` file, set the following variables:
 
 - `SARCASM_MODEL_PATH`: Path to the sarcasm model on huggingface
 - `FAKE_NEWS_MODEL_PATH`: Path to the fake news model on huggingface
-- `CUDA`= False if you have a GPU and do not want to use it, True otherwise
+- `CUDA`: boolean, False if you have a GPU and do not want to use it, True otherwise
+- `SARCASM_MODEL_SAVED`: boolean, True if the sarcasm model is saved locally, False otherwise
+- `FAKE_NEWS_MODEL_SAVED`: boolean, True if the fake news model is saved locally, False otherwise
 
 
 ## Model Architectures

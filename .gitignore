@@ -3,6 +3,8 @@ raw_data/
 __pycache__/
 train_test_datasets/
 models/
+results/
+notebooks/
 #excluding ipynb, .env, .python-version
 *.ipynb
 .env
