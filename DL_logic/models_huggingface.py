@@ -17,7 +17,7 @@ def sarcasm_model_loader(sarcasm_model_path=SARCASM_MODEL_PATH):
 
     return sarcasm_model, tokenizer_sarcasm
 
-def fake_news_model_loader(model_path=FAKE_NEWS_MODEL_PATH):
+def fake_news_model_loader(model_path=CLIMATEBERT_MODEL_PATH):
 
     print(Fore.BLUE + "\nLoading fake news model..." + Style.RESET_ALL)
     # Load the model
