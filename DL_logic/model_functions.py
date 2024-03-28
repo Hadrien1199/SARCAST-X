@@ -1,6 +1,7 @@
 import torch
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import numpy as np
 from sklearn.metrics import accuracy_score, classification_report
+import evaluate
 from transformers import Trainer, TrainingArguments
 from models_huggingface import *
 from train_test_split import *
@@ -12,9 +13,19 @@ if not CUDA:#DO NOT USE CUDA
     torch.device("cpu")
 
 
+metric = evaluate.load("accuracy")
+
+############################################ METRIC Function ############################################
+
+def compute_metrics(eval_pred):
+    logits, labels = eval_pred
+    predictions = np.argmax(logits, axis=-1)
+    return metric.compute(predictions=predictions, references=labels)
+
 ############################################ SARCASM MODEL ############################################
 
 def train_sarcasm_model(model, train_dataset, test_dataset):
+
     """
     Train the sarcasm model.
 
@@ -26,16 +37,18 @@ def train_sarcasm_model(model, train_dataset, test_dataset):
     Returns:
         object: The trained model.
     """
+
     print(Fore.BLUE + "\nTraining sarcasm model..." + Style.RESET_ALL)
     # define the training arguments
     training_args = TrainingArguments(
         output_dir='./results/sarcasm',
-        num_train_epochs=1,
+        num_train_epochs=10,
         per_device_train_batch_size=8,
         per_device_eval_batch_size=8,
         warmup_steps=500,
         weight_decay=0.01,
         logging_dir='./logs',
+        evaluation_strategy="epoch"
     )
 
     # TODO: add the evaluation strategy, metrics, callbacks
@@ -44,7 +57,8 @@ def train_sarcasm_model(model, train_dataset, test_dataset):
         model=model,
         args=training_args,
         train_dataset=train_dataset,
-        eval_dataset=test_dataset
+        eval_dataset=test_dataset,
+        compute_metrics=compute_metrics
     )
 
     # train the model
@@ -54,6 +68,7 @@ def train_sarcasm_model(model, train_dataset, test_dataset):
 
 
 def evaluate_sarcasm_model(trainer, test_dataset, y_test, le):
+
     """
     Evaluate the sarcasm model.
 
@@ -66,6 +81,7 @@ def evaluate_sarcasm_model(trainer, test_dataset, y_test, le):
     Returns:
         float: The accuracy of the model.
     """
+
     print(Fore.BLUE + "\nEvaluating sarcasm model..." + Style.RESET_ALL)
     # evaluate the model
     trainer.evaluate()
@@ -85,6 +101,7 @@ def evaluate_sarcasm_model(trainer, test_dataset, y_test, le):
 
 
 def save_sarcasm_model(model, tokenizer):
+
     """
     Save the sarcasm model.
 
@@ -92,14 +109,17 @@ def save_sarcasm_model(model, tokenizer):
         model (object): The model object.
         tokenizer (object): The tokenizer object.
     """
+
     print(Fore.BLUE + "\nSaving sarcasm model..." + Style.RESET_ALL)
     # save the model
     model.save_pretrained("models/sarcasm_model")
     tokenizer.save_pretrained("models/sarcasm_model")
     print("✅ Sarcasm model saved")
 
+
 ############################################ FAKE NEWS MODEL ############################################
 def train_fake_news_model(model, train_dataset, test_dataset):
+
     """
     Train the fake news model.
 
@@ -111,16 +131,18 @@ def train_fake_news_model(model, train_dataset, test_dataset):
     Returns:
         object: The trained model.
     """
+
     print(Fore.BLUE + "\nTraining fake news model..." + Style.RESET_ALL)
     # define the training arguments
     training_args = TrainingArguments(
         output_dir='./results/fake_news',
-        num_train_epochs=10,
+        num_train_epochs=5,
         per_device_train_batch_size=16,
         per_device_eval_batch_size=16,
         warmup_steps=500,
         weight_decay=0.01,
         logging_dir='./logs',
+        evaluation_strategy="epoch"
     )
     # TODO: add the evaluation strategy, metrics, callbacks
     # define the trainer
@@ -128,7 +150,8 @@ def train_fake_news_model(model, train_dataset, test_dataset):
         model=model,
         args=training_args,
         train_dataset=train_dataset,
-        eval_dataset=test_dataset
+        eval_dataset=test_dataset,
+        compute_metrics=compute_metrics
     )
 
     # train the model
@@ -136,10 +159,58 @@ def train_fake_news_model(model, train_dataset, test_dataset):
     print("✅ Fake news model trained")
     return trainer
 
+def evaluate_fake_news_model(trainer, test_dataset, y_test, le):
+
+        """
+        Evaluate the fake news model.
+
+        Args:
+            trainer (object): The trained model object.
+            test_dataset (object): The test dataset.
+            y_test (array): The true labels.
+            le (object): The label encoder.
+
+        Returns:
+            float: The accuracy of the model.
+        """
+
+        print(Fore.BLUE + "\nEvaluating fake news model..." + Style.RESET_ALL)
+        # evaluate the model
+        trainer.evaluate()
+
+        # make predictions
+        predictions = trainer.predict(test_dataset)
+        y_pred = predictions.predictions.argmax(-1)
+
+        # calculate the accuracy
+        accuracy = accuracy_score(y_test, y_pred)
+        print(f"Accuracy: {accuracy}")
+        # print the classification report
+        print(Fore.MAGENTA +"\nClassification Report" + Style.RESET_ALL)
+        print(classification_report(y_test, y_pred, target_names=le.classes_))
+        print("✅ Fake news model evaluated")
+        return accuracy
+
+def save_fake_news_model(model, tokenizer):
+
+        """
+        Save the fake news model.
+
+        Args:
+            model (object): The model object.
+            tokenizer (object): The tokenizer object.
+        """
+
+        print(Fore.BLUE + "\nSaving fake news model..." + Style.RESET_ALL)
+        # save the model
+        model.save_pretrained("models/fake_news_model")
+        tokenizer.save_pretrained("models/fake_news_model")
+        print("✅ Fake news model saved")
 
 ############################################ GET PROBABILITIES ############################################
 
 def get_fakenews_probabilities(text,tokenizer_fake_news,fake_news_model):
+
     """
     Get the probabilities of sarcasm and fake news for a given text.
 
@@ -161,6 +232,7 @@ def get_fakenews_probabilities(text,tokenizer_fake_news,fake_news_model):
 
 
 def get_sarcasm_probabilities(text,tokenizer_sarcasm,sarcasm_model):
+
     """
     Get the probabilities of sarcasm and fake news for a given text.
 
@@ -170,7 +242,6 @@ def get_sarcasm_probabilities(text,tokenizer_sarcasm,sarcasm_model):
     Returns:
         float: The sarcasm probability.
     """
-
 
     # get the probabilities of the fake news model
     sarcasm_input = tokenizer_sarcasm(text, return_tensors="pt", padding=True, truncation=True)

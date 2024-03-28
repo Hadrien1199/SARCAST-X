@@ -64,8 +64,20 @@ if __name__ == "__main__":
         evaluate_sarcasm_model(trainer, test_dataset, y_test, le)
         save_sarcasm_model(sarcasm_model, tokenizer_sarcasm)
 
-    # Retrain the fake news model
-    # fake_news_model, tokenizer_fake_news = fake_news_model_loader()
+    if not FAKE_NEWS_MODEL_SAVED:
+        # Retrain the fake news model
+        fake_news_model, tokenizer_fake_news = fake_news_model_loader()
+        X_fake_news = df_fake['message']
+        y_fake_news = df_fake['sentiment']
+        train_dataset, test_dataset, y_test, le = train_test_fakenews(X_fake_news, y_fake_news, tokenizer_fake_news)
+
+        start_time = time.time()
+        trainer = train_fake_news_model(fake_news_model, train_dataset, test_dataset)
+        end_time = time.time()
+        print(Fore.GREEN + f"\nTraining time: {end_time - start_time} seconds")
+
+        evaluate_fake_news_model(trainer, test_dataset, y_test, le)
+        save_fake_news_model(fake_news_model, tokenizer_fake_news)
 
     # Get the probabilities
 
@@ -78,7 +90,7 @@ if __name__ == "__main__":
 
     print(Fore.BLUE + "\nComputing sarcasm probabilities..." + Style.RESET_ALL)
     with tqdm(total=len(df_fake)) as pbar:
-        df_fake['fake_news_prob'] = df_fake['message'].apply(lambda x: get_sarcasm_probabilities(x,tokenizer_sarcasm,sarcasm_model))
+        df_fake['sarcasm_prob'] = df_fake['message'].apply(lambda x: get_sarcasm_probabilities(x,tokenizer_sarcasm,sarcasm_model))
         pbar.update(1)
     print("✅ Sarcasm probabilities computed")
 
@@ -91,7 +103,7 @@ if __name__ == "__main__":
 
     print(Fore.BLUE + "\nComputing fake news probabilities..." + Style.RESET_ALL)
     with tqdm(total=len(df_fake)) as pbar:
-        df_fake['sarcasm_prob'] = df_fake['message'].apply(lambda x: get_fakenews_probabilities(x,tokenizer_fake_news,fake_news_model))
+        df_fake['fake_news_prob'] = df_fake['message'].apply(lambda x: get_fakenews_probabilities(x,tokenizer_fake_news,fake_news_model))
         pbar.update(1)
     print("✅ Fake news probabilities computed")
 
