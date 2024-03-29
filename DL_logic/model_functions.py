@@ -136,7 +136,7 @@ def train_fake_news_model(model, train_dataset, test_dataset):
     # define the training arguments
     training_args = TrainingArguments(
         output_dir='./results/fake_news',
-        num_train_epochs=5,
+        num_train_epochs=1,
         per_device_train_batch_size=16,
         per_device_eval_batch_size=16,
         warmup_steps=500,
