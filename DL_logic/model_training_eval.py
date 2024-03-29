@@ -6,17 +6,19 @@ from transformers import Trainer, TrainingArguments
 from models_huggingface import *
 from train_test_split import *
 from params import *
+from utils.word2vec import *
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras import layers
+from tensorflow.keras.models import Sequential
+
 from warnings import filterwarnings
 filterwarnings('ignore')
 from colorama import Fore, Style
 if not CUDA:#DO NOT USE CUDA
     torch.device("cpu")
 
-
-metric = evaluate.load("accuracy")
-
 ############################################ METRIC Function ############################################
-
+metric = evaluate.load("accuracy")
 def compute_metrics(eval_pred):
     logits, labels = eval_pred
     predictions = np.argmax(logits, axis=-1)
@@ -207,47 +209,83 @@ def save_fake_news_model(model, tokenizer):
         tokenizer.save_pretrained("models/fake_news_model")
         print("✅ Fake news model saved")
 
-############################################ GET PROBABILITIES ############################################
 
-def get_fakenews_probabilities(text,tokenizer_fake_news,fake_news_model):
 
+############################################ LSTM MODEL ############################################
+
+def train_eval_LSTM_model_sarcasm(df_sarcasm):
     """
-    Get the probabilities of sarcasm and fake news for a given text.
+    Train the LSTM model.
 
     Args:
-        text (str): The input text.
+        df (Dataframe): The dataframe containing the data.
 
     Returns:
-        float: The fake news probability.
+        object: The trained model.
     """
 
-    # get the probabilities of the fake news model
-    fake_news_input = tokenizer_fake_news(text, truncation = True, padding = "max_length", max_length = 512, return_tensors='pt')
-    fake_news_output = fake_news_model(**fake_news_input)
-    fake_news_prob = torch.nn.functional.softmax(fake_news_output.logits, dim=-1)
-    fake_news_prob = fake_news_prob.detach().numpy()
-    fake_news_prob = fake_news_prob[0][1]
+    print(Fore.BLUE + "\nEmbedding & padding data..." + Style.RESET_ALL)
 
-    return fake_news_prob
+    X_train, X_test, y_train, y_test = pad_sequences_sarcasm(df_sarcasm)
+    print("✅ Data embedded & padded")
 
 
-def get_sarcasm_probabilities(text,tokenizer_sarcasm,sarcasm_model):
+    parameters = {
+                'epochs': 2,
+                'learning_rate': 0.0001,
+                'decay': 0.1,
+                'batch_size': 32,
+                'metrics': ['accuracy'],
+                'patience': 10,
+                'monitor': 'val_loss',
+                'min_delta': 0.01
+                  }
+    print(Fore.BLUE + "\nIntializing & compiling LSTM model..." + Style.RESET_ALL)
+    model = Sequential()
+    model.add(layers.Masking())
+    model.add(layers.LSTM(20, activation='tanh'))
+    model.add(layers.Dense(15, activation='relu'))
+    model.add(layers.Dense(1, activation='sigmoid'))
 
+
+    model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=parameters['metrics'])
+    print("✅ LSTM model initialized & compiled")
+
+    early_stopping = EarlyStopping(
+                                    monitor=parameters['metrics'],
+                                    patience=parameters['patience'],
+                                    min_delta=parameters['min_delta']
+                                    )
+    print(Fore.BLUE + "\nTraining LSTM model..." + Style.RESET_ALL)
+    model.fit(
+            X_train, y_train, epochs=parameters['epochs'],
+            batch_size=parameters['batch_size'],
+            validation_split=0.2,
+            callbacks=[early_stopping]
+            )
+    print("✅ LSTM model trained")
+
+    print(Fore.BLUE + "\nEvaluating LSTM model..." + Style.RESET_ALL)
+    y_pred = model.predict(X_test)
+    # classification report
+    y_pred = (y_pred > 0.5)
+    test_performance = model.evaluate(X_test, y_test)
+    print('Test performance: ', test_performance)
+    print(Fore.MAGENTA +"\nClassification Report" + Style.RESET_ALL)
+    print(classification_report(y_test, y_pred))
+    print("✅ LSTM model evaluated")
+    return model
+
+def save_LSTM_model(model):
     """
-    Get the probabilities of sarcasm and fake news for a given text.
+    Save the LSTM model.
 
     Args:
-        text (str): The input text.
-
-    Returns:
-        float: The sarcasm probability.
+        model (object): The model object.
     """
 
-    # get the probabilities of the fake news model
-    sarcasm_input = tokenizer_sarcasm(text, return_tensors="pt", padding=True, truncation=True)
-    sarcasm_output = sarcasm_model(**sarcasm_input)
-    sarcasm_prob = torch.nn.functional.softmax(sarcasm_output.logits, dim=-1)
-    sarcasm_prob = sarcasm_prob.detach().numpy()
-    sarcasm_prob = sarcasm_prob[0][1]
-
-    return sarcasm_prob
+    print(Fore.BLUE + "\nSaving LSTM model..." + Style.RESET_ALL)
+    # save the model
+    model.save("models/LSTM_model")
+    print("✅ LSTM model saved")
+    return model

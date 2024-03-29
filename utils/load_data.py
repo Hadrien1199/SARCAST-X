@@ -1,5 +1,8 @@
 import pandas as pd
 from DL_logic.params import *
+from utils.data_cleaning import preprocess_sarcasm_data, preprocess_fakenews_data
+from colorama import Fore, Style
+
 # load datasets
 def load_social_sarcasm_data():
     df_GEN = pd.read_csv('raw_data/GEN-sarc-notsarc.csv')
@@ -36,3 +39,31 @@ def load_fakenews_data():
 def load_twitter_climate_data():
     df_climate = pd.read_csv('raw_data/twitter_climate.csv')
     return df_climate
+
+
+
+############################################ LOAD & PREPROCESS TEXT ############################################
+def load_preprocess_text():
+    """
+    Load and preprocess the sarcasm and fake news data.
+
+    Returns:
+        tuple: A tuple containing two pandas DataFrames - df_sarcasm and df_fake.
+               df_sarcasm: DataFrame containing the preprocessed sarcasm data.
+               df_fake: DataFrame containing the preprocessed fake news data.
+    """
+    # Load the data
+    print(Fore.BLUE + "\nLoading & preprocessing sarcasm data..." + Style.RESET_ALL)
+    df_sarcasm = load_social_sarcasm_data()
+    # preprocess the text
+    df_sarcasm['text'] = df_sarcasm['text'].apply(preprocess_sarcasm_data)
+    print("✅ Sarcasm data loaded & preprocessed")
+
+    # load the fake news data
+    print(Fore.BLUE + "\nLoading & preprocessing fake news data..." + Style.RESET_ALL)
+    df_fake = load_fakenews_data()
+    # preprocess the text
+    df_fake['message'] = df_fake['message'].apply(preprocess_fakenews_data)
+    print("✅ Fake news data loaded & preprocessed")
+
+    return df_sarcasm, df_fake
