@@ -225,14 +225,13 @@ def train_eval_LSTM_model_sarcasm(df_sarcasm):
     """
 
     print(Fore.BLUE + "\nEmbedding & padding data..." + Style.RESET_ALL)
-
     X_train, X_test, y_train, y_test = pad_sequences_sarcasm(df_sarcasm)
     print("✅ Data embedded & padded")
 
 
     parameters = {
-                'epochs': 2,
-                'learning_rate': 0.0001,
+                'epochs': 30,
+                'learning_rate': 0.001,
                 'decay': 0.1,
                 'batch_size': 32,
                 'metrics': ['accuracy'],
@@ -240,25 +239,26 @@ def train_eval_LSTM_model_sarcasm(df_sarcasm):
                 'monitor': 'val_loss',
                 'min_delta': 0.01
                   }
+
     print(Fore.BLUE + "\nIntializing & compiling LSTM model..." + Style.RESET_ALL)
     model = Sequential()
     model.add(layers.Masking())
     model.add(layers.LSTM(20, activation='tanh'))
     model.add(layers.Dense(15, activation='relu'))
     model.add(layers.Dense(1, activation='sigmoid'))
-
-
     model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=parameters['metrics'])
     print("✅ LSTM model initialized & compiled")
 
     early_stopping = EarlyStopping(
-                                    monitor=parameters['metrics'],
+                                    monitor=parameters['monitor'],
                                     patience=parameters['patience'],
                                     min_delta=parameters['min_delta']
                                     )
+
     print(Fore.BLUE + "\nTraining LSTM model..." + Style.RESET_ALL)
     model.fit(
-            X_train, y_train, epochs=parameters['epochs'],
+            X_train, y_train,
+            epochs=parameters['epochs'],
             batch_size=parameters['batch_size'],
             validation_split=0.2,
             callbacks=[early_stopping]
@@ -286,6 +286,6 @@ def save_LSTM_model(model):
 
     print(Fore.BLUE + "\nSaving LSTM model..." + Style.RESET_ALL)
     # save the model
-    model.save("models/LSTM_model")
+    model.save("models/LSTM_model/V1.h5")
     print("✅ LSTM model saved")
     return model
