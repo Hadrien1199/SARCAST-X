@@ -1,6 +1,6 @@
 import pandas as pd
 from DL_logic.params import *
-from utils.data_cleaning import preprocess_sarcasm_data, preprocess_fakenews_data
+from utils.data_preprocessing import preprocess_sarcasm_data, preprocess_fakenews_data
 from colorama import Fore, Style
 
 # load datasets
@@ -34,6 +34,8 @@ def load_social_sarcasm_data():
 
 def load_fakenews_data():
     df_fake = pd.read_csv('raw_data/twitter_sentiment_data.csv')
+    df_fake = df_fake[df_fake['sentiment'] != 0]
+    df_fake['sentiment']=df_fake['sentiment'].apply(lambda x: 'consensus' if x==1 or x==2 else 'non-consensus')
     return df_fake
 
 def load_twitter_climate_data():

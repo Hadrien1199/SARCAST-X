@@ -39,20 +39,20 @@ if __name__ == "__main__":
         evaluate_sarcasm_model(trainer, test_dataset, y_test, le)
         save_sarcasm_model(sarcasm_model, tokenizer_sarcasm)
 
-    # if not FAKE_NEWS_MODEL_SAVED:
-    #     # Retrain the fake news model
-    #     fake_news_model, tokenizer_fake_news = fake_news_model_loader()
-    #     X_fake_news = df_fake['message']
-    #     y_fake_news = df_fake['sentiment']
-    #     train_dataset, test_dataset, y_test, le = train_test_fakenews(X_fake_news, y_fake_news, tokenizer_fake_news)
+    if not FAKE_NEWS_MODEL_SAVED:
+        # Retrain the fake news model
+        fake_news_model, tokenizer_fake_news = fake_news_model_loader()
+        X_fake_news = df_fake['message']
+        y_fake_news = df_fake['sentiment']
+        train_dataset, test_dataset, y_test, le = train_test_fakenews(X_fake_news, y_fake_news, tokenizer_fake_news)
 
-    #     start_time = time.time()
-    #     trainer = train_fake_news_model(fake_news_model, train_dataset, test_dataset)
-    #     end_time = time.time()
-    #     print(Fore.GREEN + f"\nTraining time: {end_time - start_time} seconds")
+        start_time = time.time()
+        trainer = train_fake_news_model(fake_news_model, train_dataset, test_dataset)
+        end_time = time.time()
+        print(Fore.GREEN + f"\nTraining time: {end_time - start_time} seconds")
 
-    #     evaluate_fake_news_model(trainer, test_dataset, y_test, le)
-    #     save_fake_news_model(fake_news_model, tokenizer_fake_news)
+        evaluate_fake_news_model(trainer, test_dataset, y_test, le)
+        save_fake_news_model(fake_news_model, tokenizer_fake_news)
 
     # Get the probabilities
 

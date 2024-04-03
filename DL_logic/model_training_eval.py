@@ -230,7 +230,7 @@ def train_eval_LSTM_model_sarcasm(df_sarcasm):
 
 
     parameters = {
-                'epochs': 30,
+                'epochs': 100,
                 'learning_rate': 0.001,
                 'decay': 0.1,
                 'batch_size': 32,
@@ -246,7 +246,7 @@ def train_eval_LSTM_model_sarcasm(df_sarcasm):
     model.add(layers.LSTM(20, activation='tanh'))
     model.add(layers.Dense(15, activation='relu'))
     model.add(layers.Dense(1, activation='sigmoid'))
-    model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=parameters['metrics'])
+    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=parameters['metrics'])
     print("✅ LSTM model initialized & compiled")
 
     early_stopping = EarlyStopping(
@@ -289,3 +289,6 @@ def save_LSTM_model(model):
     model.save("models/LSTM_model/V1.h5")
     print("✅ LSTM model saved")
     return model
+
+
+############################################ LIQUID MODEL ############################################
