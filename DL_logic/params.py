@@ -15,6 +15,7 @@ FAKE_NEWS_MODEL_SAVED = False
 
 # Which model to use
 T5_MODEL_USED = False
-LSTM_MODEL_USED = True
+LSTM_SARCASM_USED = False
+LSTM_FAKE_NEWS_USED = True
 # CUDA
 CUDA = False

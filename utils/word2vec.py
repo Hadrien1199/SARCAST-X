@@ -43,3 +43,24 @@ def pad_sequences_sarcasm(df_sarcasm):
     X_train_pad_2 = pad_sequences(X_train_embed_2, dtype='float32', padding='post', maxlen=200)
     X_test_pad_2 = pad_sequences(X_test_embed_2, dtype='float32', padding='post', maxlen=200)
     return X_train_pad_2, X_test_pad_2, y_train, y_test
+
+def pad_sequences_fakenews(df_fake):
+
+    #split df_fake into train and test using slicing
+    train_data= df_fake[:int(len(df_fake)*0.8)]
+    test_data= df_fake[int(len(df_fake)*0.8):]
+
+    X_train = train_data['message']
+    X_test = test_data['message']
+    y_train = train_data['sentiment']
+    y_test = test_data['sentiment']
+    #Map non-consensus to 0 and consensus to 1
+    y_train = y_train.map({'non-consensus': 0, 'consensus': 1})
+    y_test = y_test.map({'non-consensus': 0, 'consensus': 1})
+    # Embed the training and test sentences
+    X_train_embed_2 = embedding(word2vec_transfer, X_train)
+    X_test_embed_2 = embedding(word2vec_transfer, X_test)
+    # Pad the training and test embedded sentences
+    X_train_pad_2 = pad_sequences(X_train_embed_2, dtype='float32', padding='post', maxlen=200)
+    X_test_pad_2 = pad_sequences(X_test_embed_2, dtype='float32', padding='post', maxlen=200)
+    return X_train_pad_2, X_test_pad_2, y_train, y_test

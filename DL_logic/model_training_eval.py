@@ -114,8 +114,8 @@ def save_sarcasm_model(model, tokenizer):
 
     print(Fore.BLUE + "\nSaving sarcasm model..." + Style.RESET_ALL)
     # save the model
-    model.save_pretrained("models/sarcasm_model")
-    tokenizer.save_pretrained("models/sarcasm_model")
+    model.save_pretrained("models/BERT_models/sarcasm_model")
+    tokenizer.save_pretrained("models/BERT_models/sarcasm_model")
     print("✅ Sarcasm model saved")
 
 
@@ -205,13 +205,13 @@ def save_fake_news_model(model, tokenizer):
 
         print(Fore.BLUE + "\nSaving fake news model..." + Style.RESET_ALL)
         # save the model
-        model.save_pretrained("models/fake_news_model")
-        tokenizer.save_pretrained("models/fake_news_model")
+        model.save_pretrained("models/BERT_models/fake_news_model")
+        tokenizer.save_pretrained("models/BERT_models/fake_news_model")
         print("✅ Fake news model saved")
 
 
 
-############################################ LSTM MODEL ############################################
+############################################ LSTM SARCASM MODEL ############################################
 
 def train_eval_LSTM_model_sarcasm(df_sarcasm):
     """
@@ -276,7 +276,7 @@ def train_eval_LSTM_model_sarcasm(df_sarcasm):
     print("✅ LSTM model evaluated")
     return model
 
-def save_LSTM_model(model):
+def save_LSTM_sarcasm_model(model):
     """
     Save the LSTM model.
 
@@ -286,9 +286,86 @@ def save_LSTM_model(model):
 
     print(Fore.BLUE + "\nSaving LSTM model..." + Style.RESET_ALL)
     # save the model
-    model.save("models/LSTM_model/V1.h5")
+    model.save("models/LSTM_models/sarcasm_model/V1.h5")
     print("✅ LSTM model saved")
     return model
 
 
-############################################ LIQUID MODEL ############################################
+############################################ LSTM FAKE NEWS MODEL ############################################
+
+def train_eval_LSTM_model_fakenews(df_fake):
+    """
+    Train the LSTM model.
+
+    Args:
+        df (Dataframe): The dataframe containing the data.
+
+    Returns:
+        object: The trained model.
+    """
+
+    print(Fore.BLUE + "\nEmbedding & padding data..." + Style.RESET_ALL)
+    X_train, X_test, y_train, y_test = pad_sequences_fakenews(df_fake)
+    print("✅ Data embedded & padded")
+
+    parameters = {
+                'epochs': 100,
+                'learning_rate': 0.001,
+                'decay': 0.1,
+                'batch_size': 32,
+                'metrics': ['accuracy'],
+                'patience': 10,
+                'monitor': 'val_accuracy',
+                'min_delta': 0.01
+                  }
+
+    print(Fore.BLUE + "\nIntializing & compiling LSTM model..." + Style.RESET_ALL)
+    model = Sequential()
+    model.add(layers.Masking())
+    model.add(layers.LSTM(20, activation='tanh'))
+    model.add(layers.Dense(15, activation='relu'))
+    model.add(layers.Dense(1, activation='sigmoid'))
+    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=parameters['metrics'])
+    print("✅ LSTM model initialized & compiled")
+
+    early_stopping = EarlyStopping(
+                                    monitor=parameters['monitor'],
+                                    patience=parameters['patience'],
+                                    min_delta=parameters['min_delta']
+                                    )
+
+    print(Fore.BLUE + "\nTraining LSTM model..." + Style.RESET_ALL)
+    model.fit(
+            X_train, y_train,
+            epochs=parameters['epochs'],
+            batch_size=parameters['batch_size'],
+            validation_split=0.2,
+            callbacks=[early_stopping]
+            )
+    print("✅ LSTM model trained")
+
+    print(Fore.BLUE + "\nEvaluating LSTM model..." + Style.RESET_ALL)
+    y_pred = model.predict(X_test)
+    # classification report
+    y_pred = (y_pred > 0.5)
+    test_performance = model.evaluate(X_test, y_test)
+    print('Test performance: ', test_performance)
+    print(Fore.MAGENTA +"\nClassification Report" + Style.RESET_ALL)
+    print(classification_report(y_test, y_pred))
+    print("✅ LSTM model evaluated")
+
+    return model
+
+def save_LSTM_fakenews_model(model):
+    """
+    Save the LSTM model.
+
+    Args:
+        model (object): The model object.
+    """
+
+    print(Fore.BLUE + "\nSaving LSTM model..." + Style.RESET_ALL)
+    # save the model
+    model.save("models/LSTM_models/fake_news_model/V1.h5")
+    print("✅ LSTM model saved")
+    return model

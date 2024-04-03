@@ -21,9 +21,6 @@ if __name__ == "__main__":
     # Load & preprocess the text
     df_sarcasm, df_fake = load_preprocess_text()
 
-    if LSTM_MODEL_USED:
-        sarcasm_model= train_eval_LSTM_model_sarcasm(df_sarcasm)
-
     if not SARCASM_MODEL_SAVED:
         # Retrain the sarcasm model
         sarcasm_model, tokenizer_sarcasm = sarcasm_model_loader()
